@@ -11,14 +11,18 @@ A traditional Minecraft server can become constrained by its main game tick as i
 - **Continuity Proxy** — a fork of Velocity that accepts player connections and routes each player to a backend according to their current position in the world.
 - **Continuity Server** — a fork of Paper that runs an authoritative partition of the world.
 
-When a player moves into a partition owned by another Continuity Server, the proxy transfers the player to that server seamlessly. The transfer should not display a loading screen, require a reconnect, or otherwise reveal the backend change to the client.
+When a player attempts to cross into a partition owned by another Continuity Server, the proxy transfers player authority to that server seamlessly. The source does not authoritatively apply movement inside the remote-owned partition before the handoff commits. The transfer should not display a loading screen, require a reconnect, or otherwise reveal the backend change to the client.
 
 ## Infrastructure requirements
 
-Each Continuity Server requires:
+Production Continuity deployments require:
 
-- **Redis** for distributed coordination and short-lived messaging.
-- **SQL database** for permanent state.
+- **Redis** for distributed coordination, short-lived state, and retryable asynchronous messaging.
+- **SQL database** for durable control-plane metadata and audit records.
+
+Authoritative world data is stored owner-locally and replicated according to the accepted storage decisions in `docs/decisions/0004-owner-local-storage-and-boundary-visibility.md`; SQL is not the primary blob store for ordinary chunk, entity, or point-of-interest data.
+
+Accepted ADRs may explicitly authorize a limited experimental vertical slice or protocol spike to substitute simpler infrastructure when the experiment is testing behavior rather than production durability.
 
 ## Documentation
 
