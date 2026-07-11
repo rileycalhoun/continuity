@@ -9,6 +9,7 @@ If an implementation conflicts with an accepted decision, the implementation is 
 - [Architecture overview](architecture.md)
 - [ADR 0001: Transparent spatial sharding](decisions/0001-transparent-spatial-sharding.md)
 - [ADR 0002: Messaging, coordination, and durable state](decisions/0002-messaging-coordination-and-state.md)
+- [ADR 0003: Partition directory, allocation, and membership changes](decisions/0003-partition-directory-allocation-and-membership.md)
 - [ADR template](decisions/template.md)
 
 ## Decision lifecycle

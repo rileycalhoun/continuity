@@ -31,7 +31,17 @@ Redis provides distributed coordination, short-lived state, leases, notification
 
 ### SQL database
 
-The SQL database stores permanent state and durable records that must survive the loss or replacement of Redis and individual Continuity processes.
+The SQL database stores permanent state and durable records that must survive the loss or replacement of Redis and individual Continuity processes. This includes the authoritative partition directory and sticky server assignments.
+
+## Partition directory and membership
+
+The world is divided into fixed rectangular partitions containing whole chunks. Partitions have stable logical identifiers and configurable dimensions rather than identities derived from the server currently hosting them.
+
+The SQL partition directory stores each materialized partition's durable assignment and ownership epoch. Redis stores the corresponding live lease, cached directory data, server presence, and short-lived coordination state.
+
+Unexplored parts of the world do not require preallocated directory rows. A partition is materialized atomically when first approached, assigned to an active server, and then remains sticky until the coordinator explicitly migrates it.
+
+Adding a server does not recalculate existing ownership. The server becomes eligible for new allocations and may receive existing partitions through gradual, rate-limited rebalancing. Graceful removal drains and migrates every owned partition before shutdown. Unexpected failure requires lease expiry and a higher ownership epoch before replacement authority is granted.
 
 ## Non-negotiable invariants
 
@@ -48,7 +58,8 @@ The SQL database stores permanent state and durable records that must survive th
 
 This document intentionally does not yet choose:
 
-- Partition geometry, size, or reassignment policy
+- Exact partition dimensions or automatic rebalancing heuristics
+- Physical partition storage, migration, journaling, or replication
 - The SQL database engine or schema
 - The wire protocol used by direct proxy/server control connections
 - The representation and synchronization of cross-boundary entities, blocks, or redstone

@@ -21,6 +21,8 @@ Continuity uses different mechanisms according to the required semantics:
 | Retryable asynchronous commands and events | Redis Streams |
 | Permanent state and durable audit records | SQL database |
 
+[ADR 0003](0003-partition-directory-allocation-and-membership.md) clarifies the partition-ownership entry above: SQL stores the durable partition directory and sticky assignment, while Redis stores the live ownership lease and cached directory state.
+
 Redis Pub/Sub is used only when a recipient can recover by rereading authoritative state. No correctness-critical transition may depend solely on receiving a Pub/Sub message.
 
 Redis Streams consumers use acknowledgements and may receive a message more than once. Stream handlers must therefore be idempotent and carry stable message or operation identifiers.
