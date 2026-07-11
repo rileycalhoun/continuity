@@ -11,7 +11,7 @@ A large survival world can place more simulation work on a single Minecraft serv
 
 Continuity distributes one logical world across multiple Continuity Servers using spatial partitions.
 
-The Continuity Proxy keeps the player-facing connection and routes each player to the Continuity Server authoritative for the player's current position. When the player crosses an ownership boundary, Continuity transfers backend authority without requiring a reconnect or exposing a loading screen or server transition to the client.
+The Continuity Proxy keeps the player-facing connection and routes each player to the Continuity Server authoritative for the player's current position. When a movement input would cross an ownership boundary, Continuity transfers backend authority without requiring a reconnect or exposing a loading screen or server transition to the client. The source server does not authoritatively apply a position inside the remote-owned partition before the player-session handoff commits; the crossing input is processed by the destination only after it becomes authoritative.
 
 Every player and partition has at most one authoritative server at a time. Authority changes use an epoch or equivalent fencing token so delayed work from a previous owner cannot mutate current state.
 
@@ -40,4 +40,4 @@ This decision does not fix the shape or size of partitions. Those policies may e
 
 ## Compliance
 
-An implementation conforms to this decision only if it preserves single authority, position-based routing, and a client-transparent backend transfer.
+An implementation conforms to this decision only if it preserves single authority, position-based routing, a client-transparent backend transfer, and the rule that the source never authoritatively commits remote-side movement before destination authority is established.
