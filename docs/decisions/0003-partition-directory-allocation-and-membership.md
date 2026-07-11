@@ -119,6 +119,8 @@ Graceful migration can preserve current state, but recovery after an unexpected 
 
 This ADR does not choose the physical partition-storage mechanism, journaling strategy, replication strategy, recovery point objective, or recovery time objective. Those require a separate decision. Continuity must not claim zero-data-loss failover unless the selected persistence design actually provides it.
 
+[ADR 0004](0004-owner-local-storage-and-boundary-visibility.md) subsequently selects owner-local writable files with separate durability replication, while leaving the exact replication target, journal format, synchronization mode, and recovery objectives undecided.
+
 ## Consequences
 
 ### Benefits
@@ -151,6 +153,7 @@ This ADR does not choose the physical partition-storage mechanism, journaling st
 
 - [ADR 0001: Transparent spatial sharding](0001-transparent-spatial-sharding.md)
 - [ADR 0002: Messaging, coordination, and durable state](0002-messaging-coordination-and-state.md)
+- [ADR 0004: Owner-local partition storage and boundary visibility](0004-owner-local-storage-and-boundary-visibility.md)
 - [Redis distributed-lock guidance](https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/)
 
 ## Compliance

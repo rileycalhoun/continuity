@@ -24,6 +24,7 @@ A Continuity Server is derived from Paper. It:
 - Simulates the partitions currently assigned to it.
 - Acts as the sole authority for players and game state committed to those partitions.
 - Participates in transfer preparation, commit, abort, and recovery.
+- Maintains read-only boundary projections needed by its local players.
 
 ### Redis
 
@@ -43,6 +44,16 @@ Unexplored parts of the world do not require preallocated directory rows. A part
 
 Adding a server does not recalculate existing ownership. The server becomes eligible for new allocations and may receive existing partitions through gradual, rate-limited rebalancing. Graceful removal drains and migrates every owned partition before shutdown. Unexpected failure requires lease expiry and a higher ownership epoch before replacement authority is granted.
 
+## Storage and boundary visibility
+
+The authoritative owner stores its partition's writable world files locally. Durability replication copies snapshots and subsequent changes to read-only targets for migration and recovery. No two Continuity Servers may write the same physical world-storage file.
+
+Durability replication is distinct from live boundary projection. A server whose local players can see into a neighboring partition subscribes to a visibility halo containing the required read-only chunks, entities, players, block changes, and visible effects.
+
+Remote entity projections are presentation objects. They do not tick, run AI or physics, persist data, or gain authority. A player remains visible across a server boundary whenever that player would be tracked on one Paper server. Stable cluster identity and viewer-side protocol identity prevent a visible despawn and respawn during handoff.
+
+Interactions with projected remote state are routed to the authoritative owner, which validates and applies them. Ordinary chunk boundaries do not trigger transfers; only configured partition boundaries do.
+
 ## Non-negotiable invariants
 
 1. A player or partition has at most one authoritative Continuity Server at any instant.
@@ -53,16 +64,20 @@ Adding a server does not recalculate existing ownership. The server becomes elig
 6. Critical operations are idempotent and recoverable after duplicate delivery or process failure.
 7. Redis loss may reduce availability, but must not silently violate ownership or duplicate permanent state.
 8. Ordinary per-tick player movement is not routed through a centralized message broker.
+9. Only an authoritative owner writes partition world data; replicas and projections remain read-only.
+10. Players and entities remain visible across partition boundaries within the normal configured tracking rules.
+11. Boundary projections never become authoritative without an explicit coordinator commit and a newer ownership epoch.
 
 ## Undecided details
 
 This document intentionally does not yet choose:
 
 - Exact partition dimensions or automatic rebalancing heuristics
-- Physical partition storage, migration, journaling, or replication
+- Durability replica placement, replication factor, journal format, synchronous mode, or recovery objectives
 - The SQL database engine or schema
 - The wire protocol used by direct proxy/server control connections
-- The representation and synchronization of cross-boundary entities, blocks, or redstone
+- Complete mechanics for cross-boundary collisions, projectiles, explosions, fluids, redstone, or mob AI
+- Plugin API behavior for projected remote players and entities
 - The deployment topology for high availability
 
 Those choices require separate ADRs.
