@@ -64,18 +64,18 @@ These exceptions do not prohibit support. Continuity SHOULD provide compatibilit
 A state-changing plugin call MUST have cluster-correct semantics. Continuity MUST NOT generally implement compatibility as:
 
 ~~~text
-+mutate independently on every server
-+then attempt to reconcile the results
+mutate independently on every server
+then attempt to reconcile the results
 ~~~
 
 The preferred model is:
 
 ~~~text
-+plugin invokes mutation
-+-> Continuity resolves authoritative owner
-+-> mutation executes exactly once under the current authority epoch
-+-> authoritative result is committed
-+-> resulting state, events, projections, and invalidations propagate to interested nodes
+plugin invokes mutation
+-> Continuity resolves authoritative owner
+-> mutation executes exactly once under the current authority epoch
+-> authoritative result is committed
+-> resulting state, events, projections, and invalidations propagate to interested nodes
 ~~~
 
 If a plugin invokes a mutating API on a non-authoritative server, Continuity MUST either route the operation to the authoritative owner or provide an equivalent mechanism that preserves the same single-logical-server result.
