@@ -14,6 +14,7 @@ If an implementation conflicts with an accepted decision, the implementation is 
 - [ADR 0004: Owner-local partition storage and boundary visibility](decisions/0004-owner-local-storage-and-boundary-visibility.md)
 - [ADR 0005: Player handoff state machine and packet continuity](decisions/0005-player-handoff-state-machine.md)
 - [ADR 0006: Transparent Paper and Spigot plugin compatibility](decisions/0006-transparent-paper-spigot-plugin-compatibility.md)
+- [ADR 0007: Standalone and clustered deployment profiles](decisions/0007-standalone-and-clustered-deployment-profiles.md)
 - [ADR template](decisions/template.md)
 
 ## Decision lifecycle

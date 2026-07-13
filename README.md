@@ -13,16 +13,13 @@ A traditional Minecraft server can become constrained by its main game tick as i
 
 When a player attempts to cross into a partition owned by another Worldline Server, the proxy transfers player authority to that server seamlessly. The source does not authoritatively apply movement inside the remote-owned partition before the handoff commits. The transfer should not display a loading screen, require a reconnect, or otherwise reveal the backend change to the client.
 
-## Infrastructure requirements
+## Deployment profiles
 
-Production Worldline deployments require:
+The standard standalone deployment requires only one **Worldline Proxy** and one or more **Worldline Servers**. It uses embedded SQLite for durable control-plane metadata and does not require Redis, an external SQL server, or a broker.
 
-- **Redis** for distributed coordination, short-lived state, and retryable asynchronous messaging.
-- **SQL database** for durable control-plane metadata and audit records.
+Future clustered deployments with multiple active proxies may use shared durable storage and distributed coordination backends, but those backends are intentionally not fixed yet. Standalone SQLite and zero-Redis operation remains a permanent first-class deployment profile.
 
-Authoritative world data is stored owner-locally and replicated according to the accepted storage decisions in `docs/decisions/0004-owner-local-storage-and-boundary-visibility.md`; SQL is not the primary blob store for ordinary chunk, entity, or point-of-interest data.
-
-Accepted ADRs may explicitly authorize a limited experimental vertical slice or protocol spike to substitute simpler infrastructure when the experiment is testing behavior rather than production durability.
+Authoritative world data is stored owner-locally and replicated according to the accepted storage decisions in `docs/decisions/0004-owner-local-storage-and-boundary-visibility.md`; the control-plane database is not the primary blob store for ordinary chunk, entity, or point-of-interest data.
 
 ## Documentation
 

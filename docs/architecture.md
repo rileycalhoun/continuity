@@ -32,19 +32,17 @@ A Worldline Server is derived from Paper. It:
 
 The active coordinator serializes partition materialization, allocation, migration, and membership-driven ownership changes. In the initial single-proxy topology, the Worldline Proxy holds this role. A future highly available coordinator or leader-election design requires a separate accepted ADR.
 
-### Redis
+### Deployment profiles and control-plane state
 
-Redis provides distributed coordination, short-lived state, leases, notifications, and retryable asynchronous messaging. Redis data is not the permanent source of truth.
+In the standalone topology, one active Worldline Proxy uses embedded SQLite for durable control-plane metadata and process memory for reconstructible live coordination state. Redis and an external SQL server are not required.
 
-### SQL database
-
-The SQL database stores permanent control-plane state and durable records that must survive the loss or replacement of Redis and individual Worldline processes. This includes the authoritative partition directory, sticky server assignments, and durable audit records. Ordinary chunk, entity, and point-of-interest world data is stored owner-locally according to ADR 0004 rather than using SQL as the primary blob store.
+Future clustered multi-proxy topologies may use shared durable storage and distributed coordination backends. Their exact infrastructure is intentionally undecided and requires a separate accepted ADR. The core ownership, fencing, idempotency, and recovery semantics must remain independent of any one infrastructure product.
 
 ## Partition directory and membership
 
 The world is divided into fixed rectangular partitions containing whole chunks. Partitions have stable logical identifiers and configurable dimensions rather than identities derived from the server currently hosting them.
 
-The SQL partition directory stores each materialized partition's durable assignment and ownership epoch. Redis stores the corresponding live lease, cached directory data, server presence, and short-lived coordination state.
+The durable partition directory stores each materialized partition's assignment and ownership epoch. In standalone mode it is backed by embedded SQLite, while live leases, cached directory data, server presence, and short-lived coordination state are owned by the active proxy and reconstructed from durable state plus live direct connections when necessary.
 
 Unexplored parts of the world do not require preallocated directory rows. A partition is materialized atomically by the active coordinator when first approached, assigned to an active server, and then remains sticky until the coordinator explicitly migrates it.
 
@@ -92,7 +90,7 @@ This compatibility runtime is a late-stage 1.0 requirement and is not required f
 4. A failed transfer must resolve to a known owner or safely stop progress; it must never create two owners.
 5. Missing a best-effort notification cannot corrupt world or player state.
 6. Critical operations are idempotent and recoverable after duplicate delivery or process failure.
-7. Redis loss may reduce availability, but must not silently violate ownership or duplicate permanent state.
+7. Loss of reconstructible coordination state or an optional external coordination backend may reduce availability, but must not silently violate ownership or duplicate permanent state.
 8. Ordinary per-tick player movement is not routed through a centralized message broker.
 9. Only an authoritative owner writes partition world data; replicas and projections remain read-only.
 10. Players and entities remain visible across partition boundaries within the normal configured tracking rules.
@@ -114,7 +112,7 @@ This document intentionally does not yet choose:
 
 - Exact partition dimensions or automatic rebalancing heuristics
 - Durability replica placement, replication factor, journal format, synchronous mode, or recovery objectives
-- The SQL database engine or schema
+- The clustered multi-proxy durable-store and coordination backends
 - The wire protocol, packet classification, buffer limits, and timeout budgets used by direct proxy/server control connections
 - Production behavior for handoffs involving vehicles, open containers, sleeping, portals, or other complex player states
 - Complete mechanics for cross-boundary collisions, projectiles, explosions, fluids, redstone, or mob AI
