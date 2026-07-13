@@ -10,7 +10,7 @@ The slice deliberately substitutes simple infrastructure (in-memory ownership ma
 
 ## Starting point (2026-07-12)
 
-- `proxy/` is an unmodified Velocity fork (`3.6.0-SNAPSHOT`); `server/` is an unmodified Paper fork (MC 26.2). Neither contains any Worldline code yet.
+- **M1 complete:** `proxy/` (Velocity `3.6.0-SNAPSHOT`) and `server/` (Paper MC 26.2) now contain the Worldline connection-splice spike. An unmodified client successfully transitioned between backends without disconnecting or seeing a loading screen.
 - The server fork has a `runServers` Gradle task in progress that boots a fixed two-node topology (`server-a` on 25566, `server-b` on 25567).
 - ADRs 0001–0006 and the architecture overview are accepted and define the constraints this plan must satisfy.
 
@@ -48,6 +48,12 @@ Prove the transparent backend switch in isolation, with a standing-still player 
 **Exit:** a stationary player is switched `server-a` → `server-b` with no loading screen or disconnect, and can move, chat, and take damage normally afterward. If this proves impossible without client modification, stop and write the findings into a superseding ADR — nothing after this milestone is worth building first.
 
 ### M2 — Handoff control plane and state machine skeleton
+
+**Status: Complete (2026-07-13).** The proxy owns the fenced in-memory session record and static
+partition map; a direct TCP control channel carries the complete identity envelope to each Paper
+server. The eight phases, timed transition logs, idempotent retries, stale-epoch rejection,
+conditional commit reread, and drop/delay/duplicate/crash hooks are covered by focused tests. The
+scripted prepare→abort round trip passes against the live Paper endpoint.
 
 - Direct experimental proxy↔server control transport (simplest thing that works — a dedicated TCP connection or a channel on the existing backend connection). Every message carries the ADR 0005 identity envelope: `protocol_version`, `transfer_id`, `player_uuid`, server IDs, partition IDs and epochs, `player_session_epoch`, `player_state_version`.
 - In-memory ownership map in the proxy; servers are told which partition they own at boot.

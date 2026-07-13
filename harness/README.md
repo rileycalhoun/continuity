@@ -1,6 +1,6 @@
 # Vertical-slice dev harness
 
-Local two-node topology for the [vertical-slice roadmap](../docs/vertical-slice-roadmap.md) (M0): one Worldline Proxy on `25565`, `server-a` on `25566`, `server-b` on `25567`. Both servers run identical world files; the static partition boundary in `worldline.toml` splits the world at chunk X = 0.
+Local two-node topology for the [vertical-slice roadmap](../docs/vertical-slice-roadmap.md) (M0): one Worldline Proxy on `25565`, `server-a` on `25566`, `server-b` on `25567`. M2 control endpoints listen on `25576` and `25577`. Both servers run identical world files; the static partition boundary in `worldline.toml` splits the world at chunk X = 0.
 
 Everything here is slice-only development tooling under the ADR 0005 experimental exception. The `forwarding.secret` is a local-development secret shared with each server's `config/paper-global.yml`; it protects nothing outside this harness.
 
@@ -67,7 +67,16 @@ Copies `server-a`'s world over `server-b`'s (keeping a `world.pre-sync-backup`) 
 harness/run-prepare-abort.sh
 ```
 
-Runs the M2 placeholder prepare→abort round trip against the proxy control skeleton. This is in-process until the experimental proxy↔server transport exists.
+With the slice topology running, sends the M2 placeholder prepare→abort round trip from the proxy
+control plane to the real Paper control endpoint on `server-b`. The command validates the full
+identity envelope and partition epoch at both ends.
+
+The M2 transport opens one framed TCP connection per request and performs no hidden reconnect or
+retry. A caller resolves ambiguous commit delivery from the proxy session record, then explicitly
+retries the same `transfer_id` only when that authoritative state permits it.
+
+Inject a transition failure with `-Dworldline.failure.<phase>=drop|delay:<ms>|duplicate|crash` on
+the proxy; phase names are lowercase values such as `preparing_destination` and `committed`.
 
 ## Files
 

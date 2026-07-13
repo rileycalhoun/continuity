@@ -22,7 +22,7 @@ for d in "$server_run_dir/server-a" "$server_run_dir/server-b"; do
     [[ -f "$d/eula.txt" ]] || { echo "error: $d is not initialized (missing eula.txt); run 'cd server && ./gradlew :paper-server:runServers' once first" >&2; exit 1; }
 done
 
-for port in 25565 25566 25567; do
+for port in 25565 25566 25567 25576 25577; do
     if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then
         exec 3>&- || true
         echo "error: port $port is already in use; is the slice already running?" >&2
@@ -69,7 +69,7 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 start_server() {
-    local name="$1" port="$2"
+    local name="$1" port="$2" control_port="$3" partition="$4"
     local resume=""
     [[ "$name" == "server-b" ]] && resume=-Dworldline.resume=true
     echo "Starting $name on port $port (log: $log_dir/$name.log)"
@@ -77,6 +77,9 @@ start_server() {
         ${resume:+"$resume"} \
         -Dworldline.config=worldline.toml \
         -Dworldline.server-id="$name" \
+        -Dworldline.partition-id="$partition" \
+        -Dworldline.partition-epoch=1 \
+        -Dworldline.control-port="$control_port" \
         -Dterminal.jline=false \
         -Dnet.kyori.adventure.text.warnWhenLegacyFormattingDetected=true \
         -Dio.papermc.paper.suppress.sout.nags=true \
@@ -84,8 +87,8 @@ start_server() {
     pids+=($!)
 }
 
-start_server server-a 25566
-start_server server-b 25567
+start_server server-a 25566 25576 west
+start_server server-b 25567 25577 east
 
 echo "Starting proxy on port 25565 (log: $log_dir/proxy.log)"
 (cd "$proxy_run_dir" && exec java -Xms512M -Xmx512M -Dworldline.config=worldline.toml \
@@ -114,6 +117,8 @@ wait_for_port() {
 
 wait_for_port server-a 25566
 wait_for_port server-b 25567
+wait_for_port server-a-control 25576
+wait_for_port server-b-control 25577
 wait_for_port proxy 25565
 
 echo

@@ -12,17 +12,21 @@ dimension = "minecraft:overworld"
 
 [servers.server-a]
 game-address = "127.0.0.1:25566"
+control-address = "127.0.0.1:25576"
 
 [servers.server-b]
 game-address = "127.0.0.1:25567"
+control-address = "127.0.0.1:25577"
 
 [[partitions]]
 id = "west"
 owner = "server-a"
+epoch = 1
 # Inclusive chunk-coordinate bounds; absent bounds are unbounded.
 chunk-x-max = -1
 
 [[partitions]]
 id = "east"
 owner = "server-b"
+epoch = 1
 chunk-x-min = 0

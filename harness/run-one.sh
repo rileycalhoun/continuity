@@ -20,8 +20,8 @@ memory_gb="${WORLDLINE_RUN_MEMORY_GB:-2}"
 
 case "$component" in
     proxy)    port=25565 ;;
-    server-a) port=25566 ;;
-    server-b) port=25567 ;;
+    server-a) port=25566; control_port=25576; partition=west ;;
+    server-b) port=25567; control_port=25577; partition=east ;;
     *) usage ;;
 esac
 
@@ -46,6 +46,12 @@ if [[ "$component" == "proxy" ]]; then
     exec java -Xms512M -Xmx512M -Dworldline.config=worldline.toml \
         -Dworldline.splice-target=server-b -Dvelocity.packet-decode-logging=true -Dterminal.jline=false \
         -jar "$proxy_jar"
+fi
+
+if (exec 3<>"/dev/tcp/127.0.0.1/$control_port") 2>/dev/null; then
+    exec 3>&- || true
+    echo "error: control port $control_port is already in use" >&2
+    exit 1
 fi
 
 server_jar="$(ls "$repo_root"/server/paper-server/build/libs/paper-bundler-*.jar 2>/dev/null | head -1 || true)"
@@ -74,6 +80,9 @@ exec java "-Xms${memory_gb}G" "-Xmx${memory_gb}G" \
     ${resume:+"$resume"} \
     -Dworldline.config=worldline.toml \
     -Dworldline.server-id="$component" \
+    -Dworldline.partition-id="$partition" \
+    -Dworldline.partition-epoch=1 \
+    -Dworldline.control-port="$control_port" \
     -Dterminal.jline=false \
     -Dnet.kyori.adventure.text.warnWhenLegacyFormattingDetected=true \
     -Dio.papermc.paper.suppress.sout.nags=true \
