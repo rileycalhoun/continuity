@@ -39,6 +39,15 @@ cp "$harness_dir/worldline.toml" "$proxy_run_dir/worldline.toml"
 for d in "$server_run_dir/server-a" "$server_run_dir/server-b"; do
     cp "$harness_dir/worldline.toml" "$d/worldline.toml"
     cmp -s "$harness_dir/worldline.toml" "$d/worldline.toml" || { echo "error: failed to install worldline.toml into $d" >&2; exit 1; }
+    # The client's signed-chat session does not survive the M1 silent splice (it never re-sends
+    # chat_session_update to the new backend), so the slice runs with secure-profile enforcement
+    # off. Relaxed chat-signing is the documented fallback in docs/vertical-slice-roadmap.md.
+    if grep -q '^enforce-secure-profile=' "$d/server.properties" 2>/dev/null; then
+        sed -e 's/^enforce-secure-profile=.*/enforce-secure-profile=false/' "$d/server.properties" > "$d/server.properties.tmp"
+        mv "$d/server.properties.tmp" "$d/server.properties"
+    else
+        printf 'enforce-secure-profile=false\n' >> "$d/server.properties"
+    fi
 done
 cmp -s "$harness_dir/worldline.toml" "$proxy_run_dir/worldline.toml" || { echo "error: failed to install worldline.toml into $proxy_run_dir" >&2; exit 1; }
 

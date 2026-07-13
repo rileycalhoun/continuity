@@ -13,8 +13,7 @@ harness/run-slice.sh
 Requires built jars and initialized server run directories:
 
 ```sh
-cd server && ./gradlew :paper-server:createBundlerJar   # server jar
-cd proxy  && ./gradlew :velocity-proxy:shadowJar        # proxy jar
+harness/build-jars.sh                                   # server + proxy jars
 cd server && ./gradlew :paper-server:runServers         # first-time run-dir init (accept EULA, generate world)
 ```
 
@@ -26,6 +25,33 @@ For the M1 splice spike, stand still and run `/server server-b`. The proxy silen
 second backend connection and swaps packet routing without putting the client through configuration
 or forwarding Paper's login packet. This manual path is deliberately limited to `server-a` to
 `server-b`; restart the harness before repeating it.
+
+The slice runs with `enforce-secure-profile=false` on both backends (`run-slice.sh` enforces this
+at boot). The client's signed-chat session is established once per connection and is never re-sent
+to a spliced-in backend, so the destination server has no profile public key for the player and
+would reject chat under secure-profile enforcement. On splice the proxy also clears the client's
+own remembered chat session (a player-info `INITIALIZE_CHAT` with no session), since the new
+backend broadcasts the player's chat unsigned and the client would otherwise fail to validate its
+own messages. The client only accepts unsigned chat when the login packet it saw advertised
+`enforce-secure-profile=false`, so both halves of this workaround depend on that setting. Relaxed
+chat-signing is the residual constraint anticipated by risk 1 in the
+[vertical-slice roadmap](../docs/vertical-slice-roadmap.md); carrying signed-chat sessions across
+a handoff needs its own design work later.
+
+## Separate terminals
+
+To run each process in its own terminal instead of the single-terminal boot:
+
+```sh
+harness/run-one.sh server-a   # terminal 1
+harness/run-one.sh server-b   # terminal 2
+harness/run-one.sh proxy      # terminal 3
+```
+
+Each invocation installs the same canonical config as `run-slice.sh`, then runs the component in
+the foreground with identical flags, so logs and the server console stay in that terminal.
+Start order doesn't strictly matter (the proxy retries backend connections), but starting the
+servers first avoids join failures while they boot.
 
 ## World sync
 
@@ -45,7 +71,9 @@ Runs the M2 placeholder prepare→abort round trip against the proxy control ske
 
 ## Files
 
+- `build-jars.sh` — builds the server bundler jar and the proxy shadow jar
 - `run-slice.sh` — boots proxy + both servers, health-checks the ports
+- `run-one.sh` — boots a single component in the foreground (for separate terminals)
 - `run-prepare-abort.sh` — runs the scripted M2 prepare→abort round trip
 - `sync-worlds.sh` — copies the world from server-a to server-b
 - `velocity.toml` — canonical proxy config (installed into the run dir on each boot)
