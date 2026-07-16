@@ -1,6 +1,6 @@
 # Vertical-slice dev harness
 
-Local two-node topology for the [vertical-slice roadmap](../docs/vertical-slice-roadmap.md) (M0): one Worldline Proxy on `25565`, `server-a` on `25566`, `server-b` on `25567`. M2/M3 control endpoints listen on `25576` and `25577`. Both servers run identical world files; the static partition boundary in `worldline.toml` splits the world at chunk X = 0.
+Local two-node topology for the [vertical-slice roadmap](../docs/vertical-slice-roadmap.md) (M0): one Worldline Proxy on `25565`, `server-a` on `25566`, `server-b` on `25567`. M2-M4 control endpoints listen on `25576` and `25577`. Both servers run identical world files; the static partition boundary in `worldline.toml` splits the world at chunk X = 0.
 
 Everything here is slice-only development tooling under the ADR 0005 experimental exception. The `forwarding.secret` is a local-development secret shared with each server's `config/paper-global.yml`; it protects nothing outside this harness.
 
@@ -76,6 +76,18 @@ The M2 transport opens one framed TCP connection per request and performs no hid
 retry. A caller resolves ambiguous commit delivery from the proxy session record, then explicitly
 retries the same `transfer_id` only when that authoritative state permits it.
 
+## Freeze-stage-abort script
+
+```sh
+harness/run-freeze-stage-abort.sh <player-uuid> [player-name]
+```
+
+Keep that player connected to `server-a` and away from the boundary while the slice is running.
+The M4 probe prepares `server-b`, freezes the real source player at a server-thread boundary,
+captures and stages the versioned native player snapshot byte-exactly, then aborts before commit.
+It succeeds only when `server-a` unfreezes the player and authority and session epoch remain
+unchanged.
+
 Inject a transition failure with `-Dworldline.failure.<phase>=drop|delay:<ms>|duplicate|crash` on
 the proxy; phase names are lowercase values such as `preparing_destination` and `committed`.
 
@@ -85,6 +97,7 @@ the proxy; phase names are lowercase values such as `preparing_destination` and 
 - `run-slice.sh` — boots proxy + both servers, health-checks the ports
 - `run-one.sh` — boots a single component in the foreground (for separate terminals)
 - `run-prepare-abort.sh` — runs the scripted M3 prepare→abort round trip
+- `run-freeze-stage-abort.sh` — freezes and stages a real player's M4 snapshot, then aborts
 - `sync-worlds.sh` — copies the world from server-a to server-b
 - `velocity.toml` — canonical proxy config (installed into the run dir on each boot)
 - `forwarding.secret` — modern-forwarding secret (local dev only)

@@ -81,6 +81,19 @@ abort or timeout. Focused routing/control tests and the live prepare→abort har
 
 ### M4 — Freeze, snapshot, and staging
 
+**Status: Implementation complete (2026-07-15); live player acceptance pending.** Control
+protocol v3 carries bounded snapshot payloads. Paper freezes the source player on the server
+thread, suppresses source ticking and damage while preserving connection traffic, rejects
+unsupported UI/entity/protocol-sync states, and captures native player NBT plus transient
+movement, combat, attack, and item-cooldown state with transfer/tick/version/epoch fences. The
+destination validates byte-exact reserialization, loads the snapshot into its non-authoritative
+prepared player without ticking it, and proves the loaded native and transient state reproduce
+exactly before acknowledging `SNAPSHOT_STAGED`. Proxy movement buffering remains bounded at 64
+packets and two seconds; pre-commit failure unfreezes the source and never replays the remote-side
+crossing. Focused proxy/server tests and the full proxy suite pass. The live
+`run-freeze-stage-abort.sh` probe is ready but was not executed with a connected player in this
+implementation session.
+
 - Source freezes the player at a tick boundary (`SOURCE_FROZEN`): no further authoritative simulation, while keepalive and other session-critical protocol traffic continues.
 - Versioned final snapshot covering the slice's required state: position/rotation/velocity and movement state, inventory and selected slot, health and food state, experience, game mode and abilities, active effects — plus source tick, `player_state_version`, `transfer_id`, and all epochs.
 - Proxy holds the bounded, ordered buffer of replayable input (crossing input first) with explicit size and time limits; overflow or timeout aborts and safely resumes the source.

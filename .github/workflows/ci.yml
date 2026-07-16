@@ -70,3 +70,7 @@ jobs:
       - name: Compile server
         working-directory: server
         run: ./gradlew :paper-server:compileJava
+
+      - name: Test Worldline server code
+        working-directory: server
+        run: ./gradlew :paper-server:test --tests "org.bukkit.support.suite.WorldlineTestSuite"
