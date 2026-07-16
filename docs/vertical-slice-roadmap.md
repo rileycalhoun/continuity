@@ -65,6 +65,14 @@ scripted prepare→abort round trip passes against the live Paper endpoint.
 
 ### M3 — Boundary detection and destination preparation
 
+**Status: Complete (2026-07-15).** Velocity decodes movement against the static partition map,
+starts preparation off the Netty event loop on approach, and withholds the first remote-owned
+movement in a 64-packet, two-second buffer. Control protocol v2 fences source and destination
+health, ownership, draining state, protocol, dimension, and operator-declared registry/client
+configuration compatibility. Paper tickets and loads the target chunk plus a one-chunk halo,
+constructs an unregistered non-authoritative `ServerPlayer`, and removes the prepared state on
+abort or timeout. Focused routing/control tests and the live prepare→abort harness pass.
+
 - Proxy inspects replayable serverbound movement against the boundary config: begin preparation on approach; on an input that would cross into remote-owned space, do **not** forward it to the source — it becomes the first entry in the handoff buffer.
 - `PREPARING_DESTINATION`: proxy verifies ADR 0005 preconditions (ownership at expected epoch, health, no draining, protocol and registry compatibility, no other active transfer), then the destination loads the target chunk and visibility halo and constructs a non-authoritative prepared player, answering `DESTINATION_READY`.
 - Slow-preparation behavior: briefly hold or constrain the crossing per the ADR; never fake remote-side movement, never buffer unbounded.

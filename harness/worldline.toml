@@ -9,6 +9,8 @@ schema-version = 1
 [world]
 level-name = "world"
 dimension = "minecraft:overworld"
+# Operator fence for registry, dimension, and client-facing configuration parity.
+compatibility-id = "paper-26.2-world-v1"
 
 [servers.server-a]
 game-address = "127.0.0.1:25566"

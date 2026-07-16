@@ -79,6 +79,7 @@ start_server() {
         -Dworldline.server-id="$name" \
         -Dworldline.partition-id="$partition" \
         -Dworldline.partition-epoch=1 \
+        -Dworldline.compatibility-id=paper-26.2-world-v1 \
         -Dworldline.control-port="$control_port" \
         -Dterminal.jline=false \
         -Dnet.kyori.adventure.text.warnWhenLegacyFormattingDetected=true \

@@ -1,6 +1,6 @@
 # Vertical-slice dev harness
 
-Local two-node topology for the [vertical-slice roadmap](../docs/vertical-slice-roadmap.md) (M0): one Worldline Proxy on `25565`, `server-a` on `25566`, `server-b` on `25567`. M2 control endpoints listen on `25576` and `25577`. Both servers run identical world files; the static partition boundary in `worldline.toml` splits the world at chunk X = 0.
+Local two-node topology for the [vertical-slice roadmap](../docs/vertical-slice-roadmap.md) (M0): one Worldline Proxy on `25565`, `server-a` on `25566`, `server-b` on `25567`. M2/M3 control endpoints listen on `25576` and `25577`. Both servers run identical world files; the static partition boundary in `worldline.toml` splits the world at chunk X = 0.
 
 Everything here is slice-only development tooling under the ADR 0005 experimental exception. The `forwarding.secret` is a local-development secret shared with each server's `config/paper-global.yml`; it protects nothing outside this harness.
 
@@ -67,9 +67,10 @@ Copies `server-a`'s world over `server-b`'s (keeping a `world.pre-sync-backup`) 
 harness/run-prepare-abort.sh
 ```
 
-With the slice topology running, sends the M2 placeholder prepare→abort round trip from the proxy
-control plane to the real Paper control endpoint on `server-b`. The command validates the full
-identity envelope and partition epoch at both ends.
+With the slice topology running, checks source compatibility, then asks `server-b` to ticket and
+load chunk `[0,0]` plus a one-chunk visibility halo and construct a non-authoritative prepared
+player. The script requires `DESTINATION_READY`, aborts, and verifies that source authority and the
+player-session epoch never changed. `server-b` logs both prepared-player creation and cleanup.
 
 The M2 transport opens one framed TCP connection per request and performs no hidden reconnect or
 retry. A caller resolves ambiguous commit delivery from the proxy session record, then explicitly
@@ -83,7 +84,7 @@ the proxy; phase names are lowercase values such as `preparing_destination` and 
 - `build-jars.sh` — builds the server bundler jar and the proxy shadow jar
 - `run-slice.sh` — boots proxy + both servers, health-checks the ports
 - `run-one.sh` — boots a single component in the foreground (for separate terminals)
-- `run-prepare-abort.sh` — runs the scripted M2 prepare→abort round trip
+- `run-prepare-abort.sh` — runs the scripted M3 prepare→abort round trip
 - `sync-worlds.sh` — copies the world from server-a to server-b
 - `velocity.toml` — canonical proxy config (installed into the run dir on each boot)
 - `forwarding.secret` — modern-forwarding secret (local dev only)
