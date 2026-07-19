@@ -21,7 +21,34 @@ The script installs `velocity.toml`, `forwarding.secret`, and `worldline.toml` i
 
 Connect a vanilla client to `127.0.0.1:25565`; you land on `server-a`.
 
-For the M1 splice spike, stand still and run `/server server-b`. The proxy silently drives the
+Normal startup enables the M5 boundary-driven handoff and does not arm the old global M1 target.
+Walk from chunk X = -1 across X = 0 to trigger the full prepare/freeze/stage/commit/resume/
+activate/replay/cleanup path. Afterward, validate the retained logs with:
+
+```sh
+harness/assert-m5-trace.sh harness/logs
+```
+
+For the deterministic M5 acceptance run, use a vanilla client in survival and prepare this state
+while still west of the boundary:
+
+1. Clear the inventory, then give at least three distinct item stacks (for example stone, bread,
+   and an iron pickaxe); place one stack in hotbar slot 3 and select that slot.
+2. Take non-lethal damage so health is partial, and sprint/jump until the hunger bar is partial.
+3. Run `/experience add <player> 7 points` and
+   `/effect give <player> minecraft:speed 120 1 true` from a permitted console/account.
+4. Walk across X = 0 without opening a container, mounting, sleeping, or entering a portal.
+5. Confirm in the same unmodified client that there was no disconnect, reconnect, loading screen,
+   JoinGame/Respawn transition, inventory duplication, selected-slot change, or effect reset.
+6. Run `harness/assert-m5-trace.sh harness/logs`. It requires matching SHA-256 snapshot hashes at
+   source freeze and destination activation, crossing movement at replay sequence 0, ordered
+   authority phases, and no client-transition trace.
+
+The visual vanilla-client observation is mandatory acceptance evidence; the log assertion does not
+replace it.
+
+For the legacy M1 splice spike only, start the harness with
+`WORLDLINE_M1_MANUAL_SPLICE=1`, stand still, and run `/server server-b`. The proxy silently drives the
 second backend connection and swaps packet routing without putting the client through configuration
 or forwarding Paper's login packet. This manual path is deliberately limited to `server-a` to
 `server-b`; restart the harness before repeating it.
@@ -84,6 +111,7 @@ the proxy; phase names are lowercase values such as `preparing_destination` and 
 - `run-slice.sh` — boots proxy + both servers, health-checks the ports
 - `run-one.sh` — boots a single component in the foreground (for separate terminals)
 - `run-prepare-abort.sh` — runs the scripted M2 prepare→abort round trip
+- `assert-m5-trace.sh` — validates M5 authority ordering and replay/state trace invariants
 - `sync-worlds.sh` — copies the world from server-a to server-b
 - `velocity.toml` — canonical proxy config (installed into the run dir on each boot)
 - `forwarding.secret` — modern-forwarding secret (local dev only)

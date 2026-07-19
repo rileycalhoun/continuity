@@ -82,6 +82,12 @@ scripted prepare→abort round trip passes against the live Paper endpoint.
 
 ### M5 — Commit, splice, and activation
 
+**Status: Implementation candidate (2026-07-18); live acceptance pending.** Protocol-v4 commit
+barriers, connection-scoped resume fencing, inert prepared-player attachment, activation, ordered
+movement replay, source save suppression/cleanup, and trace assertions are implemented and covered
+by focused tests. M5 is not complete until the mixed-state boundary walk and unmodified-client
+observation in the exit criterion below have both passed.
+
 The M1 spike findings become real code, driven by the state machine.
 
 - Atomic conditional commit of the live session record; `player_session_epoch` increments; `COMMITTED`.

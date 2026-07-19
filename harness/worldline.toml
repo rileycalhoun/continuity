@@ -9,6 +9,7 @@ schema-version = 1
 [world]
 level-name = "world"
 dimension = "minecraft:overworld"
+compatibility-id = "m5-vanilla-26.2-v1"
 
 [servers.server-a]
 game-address = "127.0.0.1:25566"
