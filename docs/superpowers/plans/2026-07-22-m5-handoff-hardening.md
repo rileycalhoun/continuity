@@ -140,4 +140,4 @@
 - [x] Run fresh Paper `WorldlineTestSuite` with `--rerun-tasks` and `:paper-server:compileJava`.
 - [x] Run `git diff --check` and inspect status/diffs in root and both submodules.
 - [x] Commit root completed checklist and advanced gitlinks: `fix: harden M5 handoff failure paths`.
-- [ ] Push proxy, server, and root `codex/m5-commit-splice` branches.
+- [x] Push proxy, server, and root `codex/m5-commit-splice` branches.
